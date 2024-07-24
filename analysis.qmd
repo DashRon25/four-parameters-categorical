@@ -11,6 +11,20 @@ execute:
 #| message: false
 library(primer.data)
 library(tidyverse)
+library(brms)
+library(tidybayes)
+library(gtsummary)
+```
+
+```{r}
+#| label: model
+#| cache: true
+fit_nes <- brm(formula = pres_vote ~ sex, 
+data = nes_92, 
+family = categorical(), 
+silent = 2, refresh = 0, 
+seed = 76)
+ndata <- tibble(sex = c("Female", "Male"))
 ```
 
 ```{r}
@@ -26,4 +40,32 @@ nes_92 <- nes |>
     pres_vote == "Third Party" ~ "Perot"
   ))
 ```
-We are analyzing a dataset from the American National Election Studies to determine if sex was a factor in voting for the 1992 presidential election. One problem is that the sample is not random enough to accurately represent the population.
+
+```{r}
+#| label: plot
+fit_nes |> add_epred_draws(newdata = ndata) |> 
+select(sex, .category, .epred) |> ggplot(aes(x = .epred, fill = sex)) +
+geom_histogram(bins = 100) + facet_grid(~.category) + 
+scale_x_continuous(breaks  = c(0.05, 0.3, 0.6), labels = scales::percent_format()) +
+labs(title = "Posterior for Expected Probability of Candidate Support Among Women",
+subtitle  = "Women are most likely to support Clinton", 
+x = "Posterior Probability of Expected Vote Probability", 
+y = "Count")
+```
+
+We are analyzing a dataset from the American National Election Studies to determine if sex was a factor in voting for the 1992 presidential election. One problem is that the sample is not random enough to accurately represent the population. We made a multinomial logistic regression model to develop approximate intercepts for the votes each candidate get. In our model, women are more likely to support Clinton. Women are around 53% likely to support Clinton, but it could be around 48% or 58%
+
+\begin{aligned}
+\rho_{clinton} &=& \frac{e^{\beta_{0, clinton} + \beta_{1, clinton} male}}{1 + e^{\beta_{0, clinton} + \beta_{1, clinton} male}}\\
+\rho_{perot} &=& \frac{e^{\beta_{0, perot} + \beta_{1, perot} male}}{1 + e^{\beta_{0, perot} + \beta_{1, perot} male}}\\
+\rho_{bush}  &=& 1 - \rho_{clinton} - \rho_{perot}
+\end{aligned}
+
+
+```{r}
+#| label: table
+tbl_regression(fit_nes)
+```
+
+
+
