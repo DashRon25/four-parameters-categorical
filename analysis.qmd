@@ -26,4 +26,4 @@ nes_92 <- nes |>
     pres_vote == "Third Party" ~ "Perot"
   ))
 ```
-We are analyzing a dataset from the American National Election Studies to determine if sex was a factor in voting for the 1992 presidential election.
+We are analyzing a dataset from the American National Election Studies to determine if sex was a factor in voting for the 1992 presidential election. One problem is that the sample is not random enough to accurately represent the population.
